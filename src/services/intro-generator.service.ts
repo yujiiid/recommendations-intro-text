@@ -5,7 +5,6 @@ import { generateText } from './gemini.service';
 interface GenerateIntroTextInput {
   article: {
     title: string;
-    description: string;
     content: string;
     tags: string[];
   };
@@ -49,7 +48,6 @@ Requirements:
 
 Article:
 Title: ${input.article.title}
-Description: ${input.article.description}
 Tags: ${input.article.tags.join(', ') || 'No tags'}
 Content:
 ${articleContent}

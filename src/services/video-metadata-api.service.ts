@@ -22,8 +22,10 @@ export const fetchVideoById = async (
   const url = new URL('/v3/videos/_search', env.VIDEO_METADATA_API_BASE_URL);
 
   url.search = new URLSearchParams({
-    brand: env.VIDEO_METADATA_DEFAULT_BRAND,
-    country: env.VIDEO_METADATA_DEFAULT_COUNTRY,
+    //brand: env.VIDEO_METADATA_DEFAULT_BRAND,
+    //country: env.VIDEO_METADATA_DEFAULT_COUNTRY,
+    brand: 'femina',
+    country: 'se',
     sortBy: 'publishDate',
     publishState: 'published',
     order: 'desc',

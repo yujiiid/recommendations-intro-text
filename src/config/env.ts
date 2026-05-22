@@ -7,6 +7,10 @@ const envSchema = z.object({
     .string()
     .url()
     .default('https://video-metadata-api.prod.aller.cloud'),
+  RELATED_VIDEOS_API_BASE_URL: z
+    .string()
+    .url()
+    .default('https://dtnl.stage.medialaben.no/dtnl/recommendation-bff/api/v1'),
   VIDEO_METADATA_DEFAULT_BRAND: z.string().min(1).default('dagbladet'),
   VIDEO_METADATA_DEFAULT_COUNTRY: z.string().min(1).default('no'),
   GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),

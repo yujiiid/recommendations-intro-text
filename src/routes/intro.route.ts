@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { introRequestSchema } from '../schemas/intro.schema';
 import { generateIntroText } from '../services/intro-generator.service';
+import { fetchBestRelatedVideoId } from '../services/related-videos-api.service';
 import { fetchVideoById } from '../services/video-metadata-api.service';
 import { ValidationError } from '../utils/errors';
 
@@ -19,8 +20,9 @@ introRouter.post('/intro-text', async (req, res, next) => {
   }
 
   try {
-    const { article, video, options } = parsedBody.data;
-    const videoMetadata = await fetchVideoById(video.id);
+    const { article, options } = parsedBody.data;
+    const videoId = await fetchBestRelatedVideoId(article.url);
+    const videoMetadata = await fetchVideoById(videoId);
     const introText = await generateIntroText({
       article,
       video: videoMetadata,
@@ -28,7 +30,7 @@ introRouter.post('/intro-text', async (req, res, next) => {
     });
 
     res.json({
-      videoId: video.id,
+      videoId,
       introText,
     });
   } catch (error) {
