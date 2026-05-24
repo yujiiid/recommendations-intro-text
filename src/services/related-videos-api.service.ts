@@ -55,7 +55,12 @@ export const fetchBestRelatedVideoId = async (
   }
 
   if (!response.ok) {
-    throw new ExternalApiError('Related Videos API returned an error');
+    const responseBody = await response.text();
+    const details = responseBody ? `: ${responseBody.slice(0, 500)}` : '';
+
+    throw new ExternalApiError(
+      `Related Videos API returned ${response.status} ${response.statusText}${details}`,
+    );
   }
 
   const videos = parseRelatedVideos(await response.json());

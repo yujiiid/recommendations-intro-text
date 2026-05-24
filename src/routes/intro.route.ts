@@ -9,6 +9,10 @@ export const introRouter = Router();
 
 introRouter.post('/intro-text', async (req, res, next) => {
   const parsedBody = introRequestSchema.safeParse(req.body);
+  console.log('-------------')
+  console.log(parsedBody.data)
+  console.log('-------------')
+
 
   if (!parsedBody.success) {
     const message = parsedBody.error.issues
