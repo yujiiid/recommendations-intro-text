@@ -1,6 +1,6 @@
 import express from 'express';
 import { env } from './config/env';
-import { introRouter } from './routes/intro.route';
+import { articleVideoRecommendationRouter } from './routes/article-video-recommendation.route';
 import { globalErrorHandler } from './utils/errors';
 
 export const app = express();
@@ -24,6 +24,6 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.use(introRouter);
+app.use(articleVideoRecommendationRouter);
 
 app.use(globalErrorHandler);

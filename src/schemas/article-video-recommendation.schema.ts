@@ -8,7 +8,7 @@ const articleSchema = z.object({
   tags: z.array(z.string()).default([]),
 });
 
-export const introRequestSchema = z.object({
+export const articleVideoRecommendationRequestSchema = z.object({
   article: articleSchema,
   options: z
     .object({
@@ -17,4 +17,6 @@ export const introRequestSchema = z.object({
     .default({ language: 'no' }),
 });
 
-export type IntroRequest = z.infer<typeof introRequestSchema>;
+export type ArticleVideoRecommendationRequest = z.infer<
+  typeof articleVideoRecommendationRequestSchema
+>;

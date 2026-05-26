@@ -34,7 +34,7 @@ const findBestVideo = (videos: RelatedVideo[]): RelatedVideo | undefined => {
   }, undefined);
 };
 
-export const fetchBestRelatedVideoId = async (
+export const findRecommendedVideoId = async (
   articleUrl: string,
 ): Promise<string> => {
   const baseUrl = env.RELATED_VIDEOS_API_BASE_URL.replace(/\/$/, '');

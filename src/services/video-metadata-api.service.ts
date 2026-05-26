@@ -16,7 +16,7 @@ const normalizeVideo = (video: VideoMetadataApiVideo): NormalizedVideo => {
   };
 };
 
-export const fetchVideoById = async (
+export const fetchVideoMetadata = async (
   videoId: string,
 ): Promise<NormalizedVideo> => {
   const url = new URL('/v3/videos/_search', env.VIDEO_METADATA_API_BASE_URL);

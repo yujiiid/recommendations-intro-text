@@ -2,7 +2,7 @@ import type { NormalizedVideo } from '../types/video-metadata-api';
 import { truncateText } from '../utils/truncateText';
 import { generateText } from './gemini.service';
 
-interface GenerateIntroTextInput {
+interface GenerateArticleVideoIntroInput {
   article: {
     title: string;
     content: string;
@@ -14,7 +14,7 @@ interface GenerateIntroTextInput {
   };
 }
 
-const cleanIntroText = (text: string) => {
+const cleanArticleVideoIntro = (text: string) => {
   return text
     .trim()
     .replace(/^```(?:text)?/i, '')
@@ -24,7 +24,7 @@ const cleanIntroText = (text: string) => {
     .trim();
 };
 
-const buildPrompt = (input: GenerateIntroTextInput) => {
+const buildPrompt = (input: GenerateArticleVideoIntroInput) => {
   const articleContent = truncateText(input.article.content, 12000);
   const videoTranscript = truncateText(input.video.transcript, 8000);
 
@@ -61,11 +61,11 @@ ${videoTranscript}
 `.trim();
 };
 
-export const generateIntroText = async (
-  input: GenerateIntroTextInput,
+export const generateVideoIntroText = async (
+  input: GenerateArticleVideoIntroInput,
 ): Promise<string> => {
   const prompt = buildPrompt(input);
   const introText = await generateText(prompt);
 
-  return cleanIntroText(introText);
+  return cleanArticleVideoIntro(introText);
 };

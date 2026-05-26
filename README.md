@@ -1,8 +1,8 @@
-# Recommendations Intro Text
+# Article Video Recommendation Service
 
-Small Node.js + TypeScript + Express service that generates editorial intro text for a video inside an article.
+Small Node.js + TypeScript + Express service that returns a recommended video for an article and generates an editorial intro text for that video.
 
-The service receives article data, asks the Related Videos API for the best video for that article URL, fetches video metadata from the public Video Metadata API, sends article and video context to Google Gemini, and returns an `introText` that can be placed next to the video.
+The service receives article data, asks the Related Videos API for the best video for the article URL, fetches video metadata from the public Video Metadata API, sends article and video context to Google Gemini, and returns both recommendation and intro.
 
 ## Install
 
@@ -46,10 +46,10 @@ Response:
 }
 ```
 
-## Generate Intro Text
+## Create Article Video Recommendation
 
 ```bash
-curl -X POST http://localhost:3000/intro-text \
+curl -X POST http://localhost:3000/article-video-recommendations \
   -H "Content-Type: application/json" \
   -d '{
     "article": {
@@ -68,8 +68,13 @@ Response:
 
 ```json
 {
-  "videoId": "RfUte2WH",
-  "introText": "..."
+  "recommendedVideo": {
+    "id": "RfUte2WH"
+  },
+  "intro": {
+    "text": "...",
+    "language": "no"
+  }
 }
 ```
 
