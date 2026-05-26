@@ -23,23 +23,15 @@ articleVideoRecommendationRouter.post(
 
     try {
       const { article, options } = parsedBody.data;
-      const recommendedVideoId = await findRecommendedVideoId(article.url);
-      const videoMetadata = await fetchVideoMetadata(recommendedVideoId);
+      const videoId = await findRecommendedVideoId(article.url);
+      const videoMetadata = await fetchVideoMetadata(videoId);
       const introText = await generateVideoIntroText({
         article,
         video: videoMetadata,
         options,
       });
 
-      res.json({
-        recommendedVideo: {
-          id: recommendedVideoId,
-        },
-        intro: {
-          text: introText,
-          language: options.language,
-        },
-      });
+      res.json({ videoId, introText });
     } catch (error) {
       next(error);
     }
