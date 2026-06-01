@@ -1,7 +1,11 @@
 import { Router } from 'express';
-import { articleVideoRecommendationRequestSchema } from '../schemas/article-video-recommendation.schema';
+import {
+  articleVideoRecommendationRequestSchema,
+  videoPositionRequestSchema,
+} from '../schemas/article-video-recommendation.schema';
 import { generateVideoIntroText } from '../services/intro-text-generator.service';
 import { findRecommendedVideoId } from '../services/related-videos-api.service';
+import { recommendVideoInsertionIndex } from '../services/video-position-generator.service';
 import { fetchVideoMetadata } from '../services/video-metadata-api.service';
 import { ValidationError } from '../utils/errors';
 
@@ -37,3 +41,24 @@ articleVideoRecommendationRouter.post(
     }
   },
 );
+
+articleVideoRecommendationRouter.post('/video-position', async (req, res, next) => {
+  const parsedBody = videoPositionRequestSchema.safeParse(req.body);
+
+  if (!parsedBody.success) {
+    const message = parsedBody.error.issues
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+      .join('; ');
+
+    next(new ValidationError(message));
+    return;
+  }
+
+  try {
+    const recommendedInsertionIndex = await recommendVideoInsertionIndex(parsedBody.data);
+
+    res.json({ recommendedInsertionIndex });
+  } catch (error) {
+    next(error);
+  }
+});

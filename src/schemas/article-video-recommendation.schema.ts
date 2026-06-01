@@ -20,3 +20,11 @@ export const articleVideoRecommendationRequestSchema = z.object({
 export type ArticleVideoRecommendationRequest = z.infer<
   typeof articleVideoRecommendationRequestSchema
 >;
+
+export const videoPositionRequestSchema = z.object({
+  title: z.string().min(1, 'title is required'),
+  content: z.string().min(1, 'content is required'),
+  tags: z.array(z.string()).default([]),
+});
+
+export type VideoPositionRequest = z.infer<typeof videoPositionRequestSchema>;
