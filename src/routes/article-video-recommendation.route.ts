@@ -14,7 +14,9 @@ export const articleVideoRecommendationRouter = Router();
 articleVideoRecommendationRouter.post(
   '/article-video-recommendations',
   async (req, res, next) => {
-    const parsedBody = articleVideoRecommendationRequestSchema.safeParse(req.body);
+    const parsedBody = articleVideoRecommendationRequestSchema.safeParse(
+      req.body,
+    );
 
     if (!parsedBody.success) {
       const message = parsedBody.error.issues
@@ -26,39 +28,44 @@ articleVideoRecommendationRouter.post(
     }
 
     try {
-      const { article, options } = parsedBody.data;
+      const { article, options, aiPrompt } = parsedBody.data;
       const videoId = await findRecommendedVideoId(article.url);
       const videoMetadata = await fetchVideoMetadata(videoId);
-      const introText = await generateVideoIntroText({
+      const { introText, warnings } = await generateVideoIntroText({
         article,
         video: videoMetadata,
         options,
+        aiPrompt,
       });
 
-      res.json({ videoId, introText });
+      res.json({ videoId, introText, warnings });
     } catch (error) {
       next(error);
     }
   },
 );
 
-articleVideoRecommendationRouter.post('/video-position', async (req, res, next) => {
-  const parsedBody = videoPositionRequestSchema.safeParse(req.body);
+articleVideoRecommendationRouter.post(
+  '/video-position',
+  async (req, res, next) => {
+    const parsedBody = videoPositionRequestSchema.safeParse(req.body);
 
-  if (!parsedBody.success) {
-    const message = parsedBody.error.issues
-      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-      .join('; ');
+    if (!parsedBody.success) {
+      const message = parsedBody.error.issues
+        .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+        .join('; ');
 
-    next(new ValidationError(message));
-    return;
-  }
+      next(new ValidationError(message));
+      return;
+    }
 
-  try {
-    const recommendedInsertionIndex = await recommendVideoInsertionIndex(parsedBody.data);
+    try {
+      const { recommendedInsertionIndex, warnings } =
+        await recommendVideoInsertionIndex(parsedBody.data);
 
-    res.json({ recommendedInsertionIndex });
-  } catch (error) {
-    next(error);
-  }
-});
+      res.json({ recommendedInsertionIndex, warnings });
+    } catch (error) {
+      next(error);
+    }
+  },
+);

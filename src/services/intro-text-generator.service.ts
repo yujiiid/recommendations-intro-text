@@ -1,6 +1,14 @@
 import type { NormalizedVideo } from '../types/video-metadata-api';
 import { truncateText } from '../utils/truncateText';
-import { generateText } from './gemini.service';
+import {
+  type PromptTemplateWarning,
+  renderPromptTemplate,
+} from '../utils/prompt-template';
+import {
+  DEFAULT_INTRO_PROMPT_TEMPLATE,
+  INTRO_REQUIRED_PLACEHOLDERS,
+} from '../config/prompt-templates';
+import { generateResult } from './gemini.service';
 
 interface GenerateArticleVideoIntroInput {
   article: {
@@ -12,6 +20,12 @@ interface GenerateArticleVideoIntroInput {
   options: {
     language: string;
   };
+  aiPrompt?: string;
+}
+
+interface GenerateArticleVideoIntroResult {
+  introText: string;
+  warnings: PromptTemplateWarning[];
 }
 
 const cleanArticleVideoIntro = (text: string) => {
@@ -24,48 +38,39 @@ const cleanArticleVideoIntro = (text: string) => {
     .trim();
 };
 
-const buildPrompt = (input: GenerateArticleVideoIntroInput) => {
+const buildPrompt = (
+  input: GenerateArticleVideoIntroInput,
+): { prompt: string; warnings: PromptTemplateWarning[] } => {
   const articleContent = truncateText(input.article.content, 12000);
   const videoTranscript = truncateText(input.video.transcript, 8000);
 
-  return `
-You are an experienced editor.
+  const { renderedPrompt, warnings } = renderPromptTemplate({
+    template: input.aiPrompt,
+    fallbackTemplate: DEFAULT_INTRO_PROMPT_TEMPLATE,
+    context: {
+      responseLanguage: input.options.language,
+      articleTitle: input.article.title,
+      articleTags: input.article.tags.join(', ') || 'No tags',
+      articleContent,
+      videoTitle: input.video.title,
+      videoDescription: input.video.description,
+      videoTags: input.video.tags.join(', ') || 'No tags',
+      videoTranscript,
+    },
+    requiredPlaceholders: INTRO_REQUIRED_PLACEHOLDERS,
+  });
 
-Write a short editorial intro text that can be inserted in the middle of an article next to a video.
-
-Requirements:
-- Language: ${input.options.language}
-- Maximum 3-4 sentences.
-- The text must fit both the article and the video.
-- Gently suggest that the reader watches the video while reading the article.
-- Briefly describe what the video is about.
-- Do not use clickbait.
-- Do not invent facts that are not present in the article or video.
-- Do not mention AI.
-- Do not use markdown.
-- Do not wrap the answer in quotes.
-- Return only the final intro text.
-
-Article:
-Title: ${input.article.title}
-Tags: ${input.article.tags.join(', ') || 'No tags'}
-Content:
-${articleContent}
-
-Video:
-Title: ${input.video.title}
-Description: ${input.video.description}
-Tags: ${input.video.tags.join(', ') || 'No tags'}
-Transcript:
-${videoTranscript}
-`.trim();
+  return { prompt: renderedPrompt, warnings };
 };
 
 export const generateVideoIntroText = async (
   input: GenerateArticleVideoIntroInput,
-): Promise<string> => {
-  const prompt = buildPrompt(input);
-  const introText = await generateText(prompt);
+): Promise<GenerateArticleVideoIntroResult> => {
+  const { prompt, warnings } = buildPrompt(input);
+  const introText = await generateResult(prompt);
 
-  return cleanArticleVideoIntro(introText);
+  return {
+    introText: cleanArticleVideoIntro(introText),
+    warnings,
+  };
 };

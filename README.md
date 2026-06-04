@@ -60,7 +60,8 @@ curl -X POST http://localhost:3000/article-video-recommendations \
     },
     "options": {
       "language": "no"
-    }
+    },
+    "aiPrompt": "Language: ${responseLanguage}\nTitle: ${articleTitle}\nTags: ${articleTags}\nContent: ${articleContent}\nVideo title: ${videoTitle}\nVideo description: ${videoDescription}\nVideo tags: ${videoTags}\nVideo transcript: ${videoTranscript}"
   }'
 ```
 
@@ -68,19 +69,47 @@ Response:
 
 ```json
 {
-  "recommendedVideo": {
-    "id": "RfUte2WH"
-  },
-  "intro": {
-    "text": "...",
-    "language": "no"
-  }
+  "videoId": "RfUte2WH",
+  "introText": "...",
+  "warnings": []
 }
 ```
+
+## Recommend Video Position
+
+```bash
+curl -X POST http://localhost:3000/video-position \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Article title",
+    "content": "<p>Paragraph one...</p><p>Paragraph two...</p>",
+    "tags": ["fashion", "beauty"],
+    "aiPrompt": "Article title:\n${articleTitle}\n\nArticle tags:\n${articleTags}\n\nParagraphs:\n${articleParagraphs}"
+  }'
+```
+
+Response:
+
+```json
+{
+  "recommendedInsertionIndex": 3,
+  "warnings": []
+}
+```
+
+## AI Prompts
+
+- AI prompts are plain strings, not executable JavaScript.
+- Supported placeholders use simple names, for example `${articleTitle}` and `${articleParagraphs}`.
+- Placeholders are resolved in runtime context by the service (no `eval` / `new Function`).
+- Unknown placeholders are rendered as empty strings and returned as warnings.
+- If an AI prompt is missing or required placeholders are missing, the service falls back to built-in defaults and returns warnings.
+- Warning codes: `PROMPT_TEMPLATE_MISSING`, `PROMPT_TEMPLATE_MISSING_REQUIRED_PLACEHOLDERS`, `PROMPT_TEMPLATE_UNKNOWN_PLACEHOLDER`.
 
 ## Scripts
 
 ```bash
 npm run dev
 npm run typecheck
+npm run test
 ```

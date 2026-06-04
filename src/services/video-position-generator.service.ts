@@ -1,12 +1,26 @@
 import { z } from 'zod';
 import { truncateText } from '../utils/truncateText';
 import { ExternalApiError } from '../utils/errors';
-import { generateText } from './gemini.service';
+import {
+  type PromptTemplateWarning,
+  renderPromptTemplate,
+} from '../utils/prompt-template';
+import {
+  DEFAULT_VIDEO_POSITION_PROMPT_TEMPLATE,
+  VIDEO_POSITION_REQUIRED_PLACEHOLDERS,
+} from '../config/prompt-templates';
+import { generateResult } from './gemini.service';
 
 interface GenerateVideoPositionInput {
   title: string;
   content: string;
   tags: string[];
+  aiPrompt?: string;
+}
+
+interface VideoPositionRecommendationResult {
+  recommendedInsertionIndex: number | null;
+  warnings: PromptTemplateWarning[];
 }
 
 const geminiVideoPositionResponseSchema = z.object({
@@ -79,45 +93,36 @@ const extractParagraphsFromHtml = (html: string): string[] => {
   return paragraphs;
 };
 
-const buildPrompt = (input: { title: string; tags: string[]; paragraphs: string[] }) => {
-  const numberedParagraphs = truncateText(
+const buildPrompt = (
+  input: {
+    title: string;
+    tags: string[];
+    paragraphs: string[];
+    aiPrompt?: string;
+  },
+): { prompt: string; warnings: PromptTemplateWarning[] } => {
+  const articleParagraphs = truncateText(
     input.paragraphs
       .map((paragraph, index) => `${index + 1}. ${truncateText(paragraph, 1200)}`)
       .join('\n'),
     20000,
   );
 
-  return `
-You are analyzing an article and choosing the best position for inserting a generic related video recommendation block.
+  const { renderedPrompt, warnings } = renderPromptTemplate({
+    template: input.aiPrompt,
+    fallbackTemplate: DEFAULT_VIDEO_POSITION_PROMPT_TEMPLATE,
+    context: {
+      articleTitle: input.title,
+      articleTags: input.tags.join(', ') || 'No tags',
+      articleParagraphs,
+    },
+    requiredPlaceholders: VIDEO_POSITION_REQUIRED_PLACEHOLDERS,
+  });
 
-The exact video is not known yet. Your task is only to find a natural semantic break in the article.
-
-Choose the paragraph number AFTER which the video block should be inserted.
-
-Rules:
-- Paragraph numbering starts from 1.
-- Return only a valid paragraph number from the provided list.
-- Prefer a position after a completed thought or section.
-- Avoid splitting a sentence, argument, explanation, quote, or tightly connected group of paragraphs.
-- Avoid inserting after the final paragraph unless there is no better option.
-- Do not rewrite the article.
-- Do not recommend a video.
-- Return JSON only.
-
-Article title:
-${input.title}
-
-Article tags:
-${input.tags.join(', ') || 'No tags'}
-
-Paragraphs:
-${numberedParagraphs}
-
-Return exactly this JSON shape:
-{
-  "recommendedInsertionIndex": number
-}
-`.trim();
+  return {
+    prompt: renderedPrompt,
+    warnings,
+  };
 };
 
 const parseGeminiVideoPositionResponse = (
@@ -166,20 +171,30 @@ const parseGeminiVideoPositionResponse = (
 
 export const recommendVideoInsertionIndex = async (
   input: GenerateVideoPositionInput,
-): Promise<number | null> => {
+): Promise<VideoPositionRecommendationResult> => {
   const paragraphs = extractParagraphsFromHtml(input.content);
 
   if (paragraphs.length < 2) {
-    return null;
+    return {
+      recommendedInsertionIndex: null,
+      warnings: [],
+    };
   }
 
-  const prompt = buildPrompt({
+  const { prompt, warnings } = buildPrompt({
     title: input.title,
     tags: input.tags,
     paragraphs,
+    aiPrompt: input.aiPrompt,
   });
 
-  const geminiResponse = await generateText(prompt);
+  const geminiResponse = await generateResult(prompt);
 
-  return parseGeminiVideoPositionResponse(geminiResponse, paragraphs.length);
+  return {
+    recommendedInsertionIndex: parseGeminiVideoPositionResponse(
+      geminiResponse,
+      paragraphs.length,
+    ),
+    warnings,
+  };
 };

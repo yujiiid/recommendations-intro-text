@@ -5,7 +5,7 @@ import { ExternalApiError } from '../utils/errors';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
-export const generateText = async (prompt: string): Promise<string> => {
+export const generateResult = async (prompt: string): Promise<string> => {
   let response: GenerateContentResponse;
 
   try {
