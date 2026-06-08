@@ -1,0 +1,21 @@
+steps:
+  - id: Build Docker image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_IMAGE}:${_TAG}
+      - -t
+      - ${_IMAGE}:latest
+      - .
+
+  - id: Push Docker image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_IMAGE}
+
+substitutions:
+  _IMAGE: europe-north1-docker.pkg.dev/$PROJECT_ID/article-video-recommendation-service/article-video-recommendation-service
+  _TAG: latest

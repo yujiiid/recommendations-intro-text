@@ -9,7 +9,7 @@ import {
   DEFAULT_VIDEO_POSITION_PROMPT_TEMPLATE,
   VIDEO_POSITION_REQUIRED_PLACEHOLDERS,
 } from '../config/prompt-templates';
-import { generateResult } from './gemini.service';
+import { generateResult } from './ai-gateway.service';
 
 interface GenerateVideoPositionInput {
   title: string;
@@ -23,7 +23,7 @@ interface VideoPositionRecommendationResult {
   warnings: PromptTemplateWarning[];
 }
 
-const geminiVideoPositionResponseSchema = z.object({
+const aiGatewayVideoPositionResponseSchema = z.object({
   recommendedInsertionIndex: z.number().int().positive(),
 });
 
@@ -125,7 +125,7 @@ const buildPrompt = (
   };
 };
 
-const parseGeminiVideoPositionResponse = (
+const parseAiGatewayVideoPositionResponse = (
   responseText: string,
   paragraphCount: number,
 ): number => {
@@ -139,7 +139,7 @@ const parseGeminiVideoPositionResponse = (
   const jsonEndIndex = cleanedResponse.lastIndexOf('}');
 
   if (jsonStartIndex === -1 || jsonEndIndex === -1 || jsonEndIndex < jsonStartIndex) {
-    throw new ExternalApiError('Gemini API returned invalid JSON for video position');
+    throw new ExternalApiError('AI Gateway returned invalid JSON for video position');
   }
 
   const jsonText = cleanedResponse.slice(jsonStartIndex, jsonEndIndex + 1);
@@ -149,20 +149,20 @@ const parseGeminiVideoPositionResponse = (
   try {
     parsedJson = JSON.parse(jsonText);
   } catch {
-    throw new ExternalApiError('Gemini API returned malformed JSON for video position');
+    throw new ExternalApiError('AI Gateway returned malformed JSON for video position');
   }
 
-  const parsedResponse = geminiVideoPositionResponseSchema.safeParse(parsedJson);
+  const parsedResponse = aiGatewayVideoPositionResponseSchema.safeParse(parsedJson);
 
   if (!parsedResponse.success) {
-    throw new ExternalApiError('Gemini API returned an invalid video position payload');
+    throw new ExternalApiError('AI Gateway returned an invalid video position payload');
   }
 
   const { recommendedInsertionIndex } = parsedResponse.data;
 
   if (recommendedInsertionIndex > paragraphCount) {
     throw new ExternalApiError(
-      'Gemini API returned an out-of-range paragraph index for video position',
+      'AI Gateway returned an out-of-range paragraph index for video position',
     );
   }
 
@@ -188,11 +188,11 @@ export const recommendVideoInsertionIndex = async (
     aiPrompt: input.aiPrompt,
   });
 
-  const geminiResponse = await generateResult(prompt);
+  const aiGatewayResponse = await generateResult(prompt);
 
   return {
-    recommendedInsertionIndex: parseGeminiVideoPositionResponse(
-      geminiResponse,
+    recommendedInsertionIndex: parseAiGatewayVideoPositionResponse(
+      aiGatewayResponse,
       paragraphs.length,
     ),
     warnings,

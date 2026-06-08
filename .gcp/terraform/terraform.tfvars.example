@@ -1,0 +1,6 @@
+project_id = "ai-video-rec-stage"
+region     = "europe-north1"
+
+# Terraform creates the Cloud Run service skeleton with this placeholder.
+# Build and push the real image, then update Cloud Run with gcloud.
+image = "gcr.io/cloudrun/hello"

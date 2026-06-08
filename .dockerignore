@@ -1,0 +1,14 @@
+.git
+node_modules
+dist
+.env
+.env.*
+.gcp/terraform/.terraform
+*.tfstate
+*.tfstate.*
+coverage
+test-results
+playwright-report
+logs
+*.log
+.DS_Store

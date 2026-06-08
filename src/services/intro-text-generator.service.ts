@@ -8,7 +8,7 @@ import {
   DEFAULT_INTRO_PROMPT_TEMPLATE,
   INTRO_REQUIRED_PLACEHOLDERS,
 } from '../config/prompt-templates';
-import { generateResult } from './gemini.service';
+import { generateResult } from './ai-gateway.service';
 
 interface GenerateArticleVideoIntroInput {
   article: {
