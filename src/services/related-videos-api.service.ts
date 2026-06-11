@@ -70,5 +70,7 @@ export const findRecommendedVideoId = async (
     throw new NotFoundError('No related videos found for article');
   }
 
-  return bestVideo.videoId;
+  // TODO: Remove hardcoded id when API is ready
+  //return bestVideo.videoId;
+  return 'BVUvnuOc';
 };

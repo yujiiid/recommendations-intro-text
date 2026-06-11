@@ -24,8 +24,9 @@ export const fetchVideoMetadata = async (
   url.search = new URLSearchParams({
     //brand: env.VIDEO_METADATA_DEFAULT_BRAND,
     //country: env.VIDEO_METADATA_DEFAULT_COUNTRY,
-    brand: 'femina',
-    country: 'se',
+    // TODO: Remove when API is ready
+    brand: 'dagbladet',
+    country: 'no',
     sortBy: 'publishDate',
     publishState: 'published',
     order: 'desc',
