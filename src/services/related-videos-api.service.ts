@@ -72,5 +72,5 @@ export const findRecommendedVideoId = async (
 
   // TODO: Remove hardcoded id when API is ready
   //return bestVideo.videoId;
-  return 'BVUvnuOc';
+  return 'nuncLlHd';
 };
