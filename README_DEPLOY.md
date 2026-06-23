@@ -88,8 +88,8 @@ Alternatively, build and push locally:
 IMAGE=europe-north1-docker.pkg.dev/ai-video-rec-stage/article-video-recommendation-service/article-video-recommendation-service
 
 gcloud auth configure-docker europe-north1-docker.pkg.dev
-docker build -t $IMAGE:latest .
-docker push $IMAGE:latest
+docker build -t "${IMAGE}:latest" .
+docker push "${IMAGE}:latest"
 ```
 
 ## Update Cloud Run Image
@@ -102,7 +102,7 @@ Nordic-style deploy scripts.
 IMAGE=europe-north1-docker.pkg.dev/ai-video-rec-stage/article-video-recommendation-service/article-video-recommendation-service
 
 gcloud run services update article-video-recommendation-service \
-  --image $IMAGE:latest \
+  --image "${IMAGE}:latest" \
   --region europe-north1 \
   --project ai-video-rec-stage
 ```
