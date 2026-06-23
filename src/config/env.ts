@@ -10,10 +10,10 @@ const envSchema = z.object({
     .string()
     .url()
     .default('https://video-metadata-api.prod.aller.cloud'),
-  RELATED_VIDEOS_API_BASE_URL: z
+  VIDEO_RECOMMENDATIONS_API_URL: z
     .string()
     .url()
-    .default('https://dtnl.stage.medialaben.no/dtnl/recommendation-bff/api/v1'),
+    .default('https://aller-recommendations.mediehub.stream/api/search'),
   VIDEO_METADATA_DEFAULT_BRAND: z.string().min(1).default('dagbladet'),
   VIDEO_METADATA_DEFAULT_COUNTRY: z.string().min(1).default('no'),
   REQUEST_BODY_LIMIT: z.string().min(1).default('2mb'),

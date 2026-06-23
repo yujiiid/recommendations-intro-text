@@ -4,7 +4,7 @@ import {
   videoPositionRequestSchema,
 } from '../schemas/article-video-recommendation.schema';
 import { generateVideoIntroText } from '../services/intro-text-generator.service';
-import { findRecommendedVideoId } from '../services/related-videos-api.service';
+import { findRecommendedVideoId } from '../services/video-recommendations-api.service';
 import { recommendVideoInsertionIndex } from '../services/video-position-generator.service';
 import { fetchVideoMetadata } from '../services/video-metadata-api.service';
 import { ValidationError } from '../utils/errors';
@@ -29,7 +29,7 @@ articleVideoRecommendationRouter.post(
 
     try {
       const { article, options, aiPrompt } = parsedBody.data;
-      const videoId = await findRecommendedVideoId(article.url);
+      const videoId = await findRecommendedVideoId(article.content);
       const videoMetadata = await fetchVideoMetadata(videoId);
       const { introText, warnings } = await generateVideoIntroText({
         article,

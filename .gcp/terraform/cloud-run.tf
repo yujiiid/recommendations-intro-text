@@ -2,7 +2,7 @@ locals {
   plain_environment_variables = {
     NODE_ENV                       = "production"
     VIDEO_METADATA_API_BASE_URL    = "https://video-metadata-api.prod.aller.cloud"
-    RELATED_VIDEOS_API_BASE_URL    = "https://dtnl.stage.medialaben.no/dtnl/recommendation-bff/api/v1"
+    VIDEO_RECOMMENDATIONS_API_URL  = "https://aller-recommendations.mediehub.stream/api/search"
     VIDEO_METADATA_DEFAULT_BRAND   = "dagbladet"
     VIDEO_METADATA_DEFAULT_COUNTRY = "no"
     AI_GATEWAY_BASE_URL            = "https://gateway.ai.cloudflare.com/v1/f40c46d48669187fc6bb2c53761b7d6b/llm-gateway/compat"

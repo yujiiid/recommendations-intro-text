@@ -2,7 +2,7 @@
 
 Small Node.js + TypeScript + Express service that returns a recommended video for an article and generates an editorial intro text for that video.
 
-The service receives article data, asks the Related Videos API for the best video for the article URL, fetches video metadata from the public Video Metadata API, sends article and video context to Cloudflare AI Gateway through the OpenAI client, and returns both recommendation and intro.
+The service receives article data, asks the Video Recommendations API for the best video for the article content, fetches video metadata from the public Video Metadata API, sends article and video context to Cloudflare AI Gateway through the OpenAI client, and returns both recommendation and intro.
 
 ## Install
 
@@ -23,7 +23,7 @@ Fill in the values you need:
 - `CF_AIG_TOKEN` is required and must not be committed.
 - `AI_GATEWAY_BASE_URL` points the OpenAI client to Cloudflare AI Gateway.
 - `AI_GATEWAY_MODEL` controls which AI Gateway model is used.
-- `RELATED_VIDEOS_API_BASE_URL` controls where related videos are fetched from.
+- `VIDEO_RECOMMENDATIONS_API_URL` controls where video recommendations are fetched from.
 - `VIDEO_METADATA_DEFAULT_BRAND` controls the video API brand query param.
 - `VIDEO_METADATA_DEFAULT_COUNTRY` controls the video API country query param.
 
@@ -54,7 +54,6 @@ curl -X POST http://localhost:3000/article-video-recommendations \
   -H "Content-Type: application/json" \
   -d '{
     "article": {
-      "url": "https://www.femina.se/intervju/barbro-wiklund-har-hjalpt-utsatta-kvinnor-i-37-ar/11343787",
       "title": "Article title",
       "content": "Full article text",
       "tags": ["fashion", "beauty"]

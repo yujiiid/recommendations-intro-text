@@ -9,7 +9,6 @@ const promptTemplateSchema = z.preprocess((value) => {
 
 const articleSchema = z.object({
   id: z.string().optional(),
-  url: z.string().url('article.url must be a valid URL'),
   title: z.string().min(1, 'article.title is required'),
   content: z.string().min(1, 'article.content is required'),
   tags: z.array(z.string()).default([]),
