@@ -1,8 +1,8 @@
 # Article Video Recommendation Service
 
-Small Node.js + TypeScript + Express service that returns a recommended video for an article and generates an editorial intro text for that video.
+Small Node.js + TypeScript + Express service that recommends a video, generates an editorial intro text, and chooses an insertion position for an article.
 
-The service receives article data, asks the Video Recommendations API for the best video for the article content, fetches video metadata from the public Video Metadata API, sends article and video context to Cloudflare AI Gateway through the OpenAI client, and returns both recommendation and intro.
+The service receives article data and generates the requested combination of video recommendation, editorial intro, and insertion position.
 
 ## Install
 
@@ -50,12 +50,13 @@ Response:
 ## Create Article Video Recommendation
 
 ```bash
-curl -X POST http://localhost:3000/article-video-recommendations \
+curl -X POST http://localhost:3000/article-video-recommendation \
   -H "Content-Type: application/json" \
   -d '{
+    "mode": "full",
     "article": {
       "title": "Article title",
-      "content": "Full article text",
+      "content": "<p>Paragraph one...</p><p>Paragraph two...</p>",
       "tags": ["fashion", "beauty"]
     },
     "options": {
@@ -71,31 +72,25 @@ Response:
 {
   "videoId": "RfUte2WH",
   "introText": "...",
-  "warnings": []
+  "recommendedInsertionIndex": 1,
+  "warnings": [
+    {
+      "code": "PROMPT_TEMPLATE_MISSING_REQUIRED_PLACEHOLDERS",
+      "message": "AI prompt is missing required placeholders. Falling back to default template.",
+      "placeholders": ["articleParagraphs"]
+    }
+  ]
 }
 ```
 
-## Recommend Video Position
+The optional `mode` property defaults to `full` and controls which fields are generated:
 
-```bash
-curl -X POST http://localhost:3000/video-position \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Article title",
-    "content": "<p>Paragraph one...</p><p>Paragraph two...</p>",
-    "tags": ["fashion", "beauty"],
-    "aiPrompt": "Article title:\n${articleTitle}\n\nArticle tags:\n${articleTags}\n\nParagraphs:\n${articleParagraphs}"
-  }'
-```
+- `full`: returns `videoId`, `introText`, `recommendedInsertionIndex`, and `warnings`.
+- `position-only`: returns `recommendedInsertionIndex` and `warnings`.
+- `video-with-intro`: returns `videoId`, `introText`, and `warnings`.
+- `video-only`: returns `videoId` and an empty `warnings` array.
 
-Response:
-
-```json
-{
-  "recommendedInsertionIndex": 3,
-  "warnings": []
-}
-```
+When a mode performs more than one AI operation, `aiPrompt` is passed to each operation. Every operation validates the placeholders it needs and falls back to its built-in prompt when the supplied template is incompatible, adding the corresponding entries to `warnings`.
 
 ## AI Prompts
 
