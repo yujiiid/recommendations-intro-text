@@ -1,4 +1,5 @@
 import type { NormalizedVideo } from '../types/video-metadata-api';
+import { cleanVideoIntroText } from '../utils/cleanVideoIntroText';
 import { truncateText } from '../utils/truncateText';
 import {
   type PromptTemplateWarning,
@@ -27,16 +28,6 @@ interface GenerateArticleVideoIntroResult {
   introText: string;
   warnings: PromptTemplateWarning[];
 }
-
-const cleanArticleVideoIntro = (text: string) => {
-  return text
-    .trim()
-    .replace(/^```(?:text)?/i, '')
-    .replace(/```$/i, '')
-    .trim()
-    .replace(/^["'“”]+|["'“”]+$/g, '')
-    .trim();
-};
 
 const buildPrompt = (
   input: GenerateArticleVideoIntroInput,
@@ -70,7 +61,7 @@ export const generateVideoIntroText = async (
   const introText = await generateResult(prompt);
 
   return {
-    introText: cleanArticleVideoIntro(introText),
+    introText: cleanVideoIntroText(introText),
     warnings,
   };
 };

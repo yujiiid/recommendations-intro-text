@@ -78,3 +78,88 @@ export const VIDEO_POSITION_REQUIRED_PLACEHOLDERS = [
   'articleTags',
   'articleParagraphs',
 ] as const;
+
+export const DEFAULT_FULL_RECOMMENDATION_PROMPT_TEMPLATE = `
+You are an experienced digital news editor. You are given an article and one specific recommended video.
+
+Your task is to:
+1. Find the article passage that has the strongest direct semantic connection to this specific video.
+2. Choose the best paragraph after which to insert the video block.
+3. Write a short editorial intro that connects the surrounding article passage to the actual content of the video.
+
+Decision process:
+- First identify the main subject, event, people, location, and time context of the video.
+- Then find the paragraph or local group of paragraphs in the article that most directly matches those elements.
+- Choose the insertion position based on the specific video, not merely on where a generic video block would fit structurally.
+- Prefer a direct factual or event-level connection over a broad thematic connection.
+- If several positions are suitable, choose the one where the article has already introduced the people, event, or context shown in the video.
+- Use the video transcript as the primary source for what the video contains. Use the video title and tags only as supporting context.
+- Do not infer that a person in the video is reacting to, explaining, supporting, or criticizing an article topic unless this is explicitly supported by the transcript.
+
+Position requirements:
+- Choose the paragraph number AFTER which the video block should be inserted.
+- Paragraph numbering starts from 1.
+- Set recommendedInsertionIndex to one of the paragraph numbers provided in Article paragraphs.
+- Prefer a position after a completed thought, event description, or section.
+- Do not insert the video before the article has introduced the central person, event, or subject shown in the video.
+- Avoid separating tightly connected paragraphs, including:
+  - a claim and its explanation;
+  - a question and its answer;
+  - a quotation and the paragraph that introduces or explains it;
+  - a section heading and the first paragraph belonging to that section.
+- Avoid inserting after the final paragraph unless no earlier position has a meaningful connection to the video.
+- Semantic relevance to the specific video is more important than visually even spacing within the article.
+
+Intro text requirements:
+- Language: \${responseLanguage}
+- Write 1 to 3 concise sentences.
+- The intro must sound like a natural editorial continuation of the paragraph immediately before the insertion point.
+- Briefly and accurately explain what the reader will see or hear in the video.
+- When useful, create a factual contrast or transition between the article and the video, but do not manufacture a causal relationship.
+- Only mention facts, actions, statements, opinions, or reactions that are explicitly supported by the article or the video transcript.
+- Do not imply that the video explains the article's main issue unless it actually does.
+- Do not describe a person's "reaction", "strong opinion", motivation, or position unless it is clearly present in the transcript.
+- Prefer specific wording over vague phrases such as "a special moment", "strong reactions", or "find out more".
+- End with a natural invitation to watch only when it improves the text.
+- Do not use clickbait.
+- Do not mention AI, recommendation systems, metadata, transcripts, or insertion positions.
+- Do not refer to the video as being "above" or "below".
+- Do not use markdown.
+- Do not add quotation marks around the value of introText beyond the quotation marks required by JSON.
+
+Article title:
+\${articleTitle}
+
+Article tags:
+\${articleTags}
+
+Article paragraphs:
+\${articleParagraphs}
+
+Video title:
+\${videoTitle}
+
+Video tags:
+\${videoTags}
+
+Video transcript:
+\${videoTranscript}
+
+Return valid JSON only, with no comments, markdown, code fences, or text outside the JSON.
+
+Use exactly this shape:
+{
+  "recommendedInsertionIndex": number,
+  "introText": "string"
+}
+`.trim();
+
+export const FULL_RECOMMENDATION_REQUIRED_PLACEHOLDERS = [
+  'responseLanguage',
+  'articleTitle',
+  'articleTags',
+  'articleParagraphs',
+  'videoTitle',
+  'videoTags',
+  'videoTranscript',
+] as const;

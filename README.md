@@ -62,7 +62,7 @@ curl -X POST http://localhost:3000/article-video-recommendation \
     "options": {
       "language": "no"
     },
-    "aiPrompt": "Language: ${responseLanguage}\nTitle: ${articleTitle}\nTags: ${articleTags}\nContent: ${articleContent}\nVideo title: ${videoTitle}\nVideo description: ${videoDescription}\nVideo tags: ${videoTags}\nVideo transcript: ${videoTranscript}"
+    "aiPrompt": "Language: ${responseLanguage}\nArticle title: ${articleTitle}\nArticle tags: ${articleTags}\nParagraphs:\n${articleParagraphs}\nVideo title: ${videoTitle}\nVideo tags: ${videoTags}\nTranscript:\n${videoTranscript}\nChoose the insertion index and write the intro. Return JSON with recommendedInsertionIndex and introText."
   }'
 ```
 
@@ -73,24 +73,18 @@ Response:
   "videoId": "RfUte2WH",
   "introText": "...",
   "recommendedInsertionIndex": 1,
-  "warnings": [
-    {
-      "code": "PROMPT_TEMPLATE_MISSING_REQUIRED_PLACEHOLDERS",
-      "message": "AI prompt is missing required placeholders. Falling back to default template.",
-      "placeholders": ["articleParagraphs"]
-    }
-  ]
+  "warnings": []
 }
 ```
 
 The optional `mode` property defaults to `full` and controls which fields are generated:
 
-- `full`: returns `videoId`, `introText`, `recommendedInsertionIndex`, and `warnings`.
+- `full`: fetches the recommended video and its metadata, then uses one AI request to return `videoId`, `introText`, `recommendedInsertionIndex`, and `warnings`.
 - `position-only`: returns `recommendedInsertionIndex` and `warnings`.
 - `video-with-intro`: returns `videoId`, `introText`, and `warnings`.
 - `video-only`: returns `videoId` and an empty `warnings` array.
 
-When a mode performs more than one AI operation, `aiPrompt` is passed to each operation. Every operation validates the placeholders it needs and falls back to its built-in prompt when the supplied template is incompatible, adding the corresponding entries to `warnings`.
+Each mode validates `aiPrompt` against the placeholders required for that operation and falls back to its own built-in prompt when the supplied template is incompatible, adding the corresponding entries to `warnings`.
 
 ## AI Prompts
 

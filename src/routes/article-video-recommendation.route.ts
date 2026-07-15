@@ -1,42 +1,13 @@
 import { Router } from 'express';
-import {
-  type recommendationRequest,
-  recommendationRequestSchema,
-} from '../schemas/article-video-recommendation.schema';
+import { recommendationRequestSchema } from '../schemas/article-video-recommendation.schema';
+import { generateFullModeRecommendation } from '../services/full-mode-recommendation-generator.service';
 import { generateVideoIntroText } from '../services/intro-text-generator.service';
 import { findRecommendedVideoId } from '../services/video-recommendations-api.service';
 import { recommendVideoInsertionIndex } from '../services/video-position-generator.service';
 import { fetchVideoMetadata } from '../services/video-metadata-api.service';
-import type { PromptTemplateWarning } from '../utils/prompt-template';
 import { ValidationError } from '../utils/errors';
 
 export const articleVideoRecommendationRouter = Router();
-
-type VideoWithIntroInput = Pick<
-  recommendationRequest,
-  'article' | 'options' | 'aiPrompt'
->;
-
-const generateVideoWithIntro = async ({
-  article,
-  options,
-  aiPrompt,
-}: VideoWithIntroInput): Promise<{
-  videoId: string;
-  introText: string;
-  warnings: PromptTemplateWarning[];
-}> => {
-  const videoId = await findRecommendedVideoId(article.content);
-  const videoMetadata = await fetchVideoMetadata(videoId);
-  const { introText, warnings } = await generateVideoIntroText({
-    article,
-    video: videoMetadata,
-    options,
-    aiPrompt,
-  });
-
-  return { videoId, introText, warnings };
-};
 
 articleVideoRecommendationRouter.post(
   '/article-video-recommendation',
@@ -77,30 +48,35 @@ articleVideoRecommendationRouter.post(
         }
 
         case 'video-with-intro': {
-          const { videoId, introText, warnings } = await generateVideoWithIntro(
-            { article, options, aiPrompt },
-          );
+          const videoId = await findRecommendedVideoId(article.content);
+          const videoMetadata = await fetchVideoMetadata(videoId);
+          const { introText, warnings } = await generateVideoIntroText({
+            article,
+            video: videoMetadata,
+            options,
+            aiPrompt,
+          });
 
           res.json({ videoId, introText, warnings });
           return;
         }
 
         case 'full': {
-          const [position, videoRecommendation] = await Promise.all([
-            recommendVideoInsertionIndex({
-              title: article.title,
-              content: article.content,
-              tags: article.tags,
-              aiPrompt: aiPrompt,
-            }),
-            generateVideoWithIntro({ article, options, aiPrompt }),
-          ]);
+          const videoId = await findRecommendedVideoId(article.content);
+          const videoMetadata = await fetchVideoMetadata(videoId);
+          const { recommendedInsertionIndex, introText, warnings } =
+            await generateFullModeRecommendation({
+              article,
+              video: videoMetadata,
+              options,
+              aiPrompt,
+            });
 
           res.json({
-            videoId: videoRecommendation.videoId,
-            introText: videoRecommendation.introText,
-            recommendedInsertionIndex: position.recommendedInsertionIndex,
-            warnings: [...position.warnings, ...videoRecommendation.warnings],
+            videoId,
+            introText,
+            recommendedInsertionIndex,
+            warnings,
           });
           return;
         }
