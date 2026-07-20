@@ -5,6 +5,12 @@ import type {
 } from '../types/video-recommendations-api';
 import { ExternalApiError, NotFoundError } from '../utils/errors';
 
+export interface RecommendedVideo {
+  id: string;
+  title?: string;
+  posterUrl?: string;
+}
+
 const isVideoRecommendationMatch = (
   value: unknown,
 ): value is VideoRecommendationMatch => {
@@ -82,9 +88,9 @@ const getResponseErrorMessage = async (response: Response): Promise<string> => {
   return responseBody.slice(0, 500);
 };
 
-export const findRecommendedVideoId = async (
+export const findRecommendedVideo = async (
   articleContent: string,
-): Promise<string> => {
+): Promise<RecommendedVideo> => {
   const url = new URL(env.VIDEO_RECOMMENDATIONS_API_URL);
 
   url.searchParams.set('q', articleContent);
@@ -118,5 +124,7 @@ export const findRecommendedVideoId = async (
     throw new NotFoundError('No video recommendations found for article');
   }
 
-  return bestMatch.media.mediaId;
+  const { mediaId, title, posterUrl } = bestMatch.media;
+
+  return { id: mediaId, title, posterUrl };
 };

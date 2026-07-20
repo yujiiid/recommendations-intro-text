@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { recommendationRequestSchema } from '../schemas/article-video-recommendation.schema';
 import { generateFullModeRecommendation } from '../services/full-mode-recommendation-generator.service';
 import { generateVideoIntroText } from '../services/intro-text-generator.service';
-import { findRecommendedVideoId } from '../services/video-recommendations-api.service';
+import { findRecommendedVideo } from '../services/video-recommendations-api.service';
 import { recommendVideoInsertionIndex } from '../services/video-position-generator.service';
 import { fetchVideoMetadata } from '../services/video-metadata-api.service';
 import { ValidationError } from '../utils/errors';
@@ -41,15 +41,15 @@ articleVideoRecommendationRouter.post(
         }
 
         case 'video-only': {
-          const videoId = await findRecommendedVideoId(article.content);
+          const video = await findRecommendedVideo(article.content);
 
-          res.json({ videoId, warnings: [] });
+          res.json({ video, warnings: [] });
           return;
         }
 
         case 'video-with-intro': {
-          const videoId = await findRecommendedVideoId(article.content);
-          const videoMetadata = await fetchVideoMetadata(videoId);
+          const video = await findRecommendedVideo(article.content);
+          const videoMetadata = await fetchVideoMetadata(video.id);
           const { introText, warnings } = await generateVideoIntroText({
             article,
             video: videoMetadata,
@@ -57,13 +57,13 @@ articleVideoRecommendationRouter.post(
             aiPrompt,
           });
 
-          res.json({ videoId, introText, warnings });
+          res.json({ video, introText, warnings });
           return;
         }
 
         case 'full': {
-          const videoId = await findRecommendedVideoId(article.content);
-          const videoMetadata = await fetchVideoMetadata(videoId);
+          const video = await findRecommendedVideo(article.content);
+          const videoMetadata = await fetchVideoMetadata(video.id);
           const { recommendedInsertionIndex, introText, warnings } =
             await generateFullModeRecommendation({
               article,
@@ -73,7 +73,7 @@ articleVideoRecommendationRouter.post(
             });
 
           res.json({
-            videoId,
+            video,
             introText,
             recommendedInsertionIndex,
             warnings,

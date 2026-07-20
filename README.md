@@ -70,7 +70,11 @@ Response:
 
 ```json
 {
-  "videoId": "RfUte2WH",
+  "video": {
+    "id": "RfUte2WH",
+    "title": "Recommended video title",
+    "posterUrl": "https://example.com/video-poster.jpg"
+  },
   "introText": "...",
   "recommendedInsertionIndex": 1,
   "warnings": []
@@ -79,10 +83,10 @@ Response:
 
 The optional `mode` property defaults to `full` and controls which fields are generated:
 
-- `full`: fetches the recommended video and its metadata, then uses one AI request to return `videoId`, `introText`, `recommendedInsertionIndex`, and `warnings`.
+- `full`: fetches the recommended video and its metadata, then uses one AI request to return `video`, `introText`, `recommendedInsertionIndex`, and `warnings`.
 - `position-only`: returns `recommendedInsertionIndex` and `warnings`.
-- `video-with-intro`: returns `videoId`, `introText`, and `warnings`.
-- `video-only`: returns `videoId` and an empty `warnings` array.
+- `video-with-intro`: returns `video`, `introText`, and `warnings`.
+- `video-only`: returns `video` and an empty `warnings` array.
 
 Each mode validates `aiPrompt` against the placeholders required for that operation and falls back to its own built-in prompt when the supplied template is incompatible, adding the corresponding entries to `warnings`.
 
