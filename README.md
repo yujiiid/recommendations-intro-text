@@ -73,6 +73,8 @@ Response:
   "video": {
     "id": "RfUte2WH",
     "title": "Recommended video title",
+    "tags": "fashion, beauty",
+    "duration": 30.162,
     "posterUrl": "https://example.com/video-poster.jpg"
   },
   "introText": "...",

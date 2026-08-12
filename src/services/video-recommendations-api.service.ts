@@ -8,6 +8,8 @@ import { ExternalApiError, NotFoundError } from '../utils/errors';
 export interface RecommendedVideo {
   id: string;
   title?: string;
+  tags?: string;
+  duration?: number;
   posterUrl?: string;
 }
 
@@ -124,7 +126,7 @@ export const findRecommendedVideo = async (
     throw new NotFoundError('No video recommendations found for article');
   }
 
-  const { mediaId, title, posterUrl } = bestMatch.media;
+  const { mediaId, title, tags, duration, posterUrl } = bestMatch.media;
 
-  return { id: mediaId, title, posterUrl };
+  return { id: mediaId, title, tags, duration, posterUrl };
 };
