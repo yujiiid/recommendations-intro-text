@@ -48,7 +48,7 @@ export const fetchVideoMetadata = async (
   }
 
   const body = (await response.json()) as VideoMetadataApiResponse;
-  const video = body.data?.[0];
+  const video = body.data?.find(({ displayId }) => displayId === videoId);
 
   if (!video) {
     throw new NotFoundError(`Video with id "${videoId}" was not found`);

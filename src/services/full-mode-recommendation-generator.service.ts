@@ -1,17 +1,20 @@
 import {
   DEFAULT_FULL_RECOMMENDATION_PROMPT_TEMPLATE,
   FULL_RECOMMENDATION_REQUIRED_PLACEHOLDERS,
+  getFullRecommendationResponseInstructions,
 } from '../config/prompt-templates';
 import type { NormalizedVideo } from '../types/video-metadata-api';
 import { extractArticleParagraphs } from '../utils/extractArticleParagraphs';
+import type { GeneratedVideoIntro } from '../utils/parseGeneratedVideoIntros';
 import { parseFullRecommendationResponse } from '../utils/parseFullRecommendationResponse';
 import {
   type PromptTemplateWarning,
   renderPromptTemplate,
 } from '../utils/prompt-template';
+import { serializeVideosForPrompt } from '../utils/serializeVideosForPrompt';
 import { truncateText } from '../utils/truncateText';
 import { generateResult } from './ai-gateway.service';
-import { generateVideoIntroText } from './intro-text-generator.service';
+import { generateVideoIntroTexts } from './intro-text-generator.service';
 
 interface GenerateFullModeRecommendationInput {
   article: {
@@ -19,7 +22,7 @@ interface GenerateFullModeRecommendationInput {
     content: string;
     tags: string[];
   };
-  video: NormalizedVideo;
+  videos: NormalizedVideo[];
   options: {
     language: string;
   };
@@ -28,7 +31,7 @@ interface GenerateFullModeRecommendationInput {
 
 interface FullModeRecommendationResult {
   recommendedInsertionIndex: number | null;
-  introText: string;
+  videoIntros: GeneratedVideoIntro[];
   warnings: PromptTemplateWarning[];
 }
 
@@ -36,17 +39,20 @@ const buildPrompt = (input: {
   title: string;
   tags: string[];
   paragraphs: string[];
-  video: NormalizedVideo;
+  videos: NormalizedVideo[];
   language: string;
   aiPrompt?: string;
 }): { prompt: string; warnings: PromptTemplateWarning[] } => {
   const articleParagraphs = truncateText(
     input.paragraphs
-      .map((paragraph, index) => `${index + 1}. ${truncateText(paragraph, 1200)}`)
+      .map(
+        (paragraph, index) => `${index + 1}. ${truncateText(paragraph, 1200)}`,
+      )
       .join('\n'),
     20000,
   );
-  const videoTranscript = truncateText(input.video.transcript, 8000);
+  const videos = serializeVideosForPrompt(input.videos);
+  const videoIds = input.videos.map(({ displayId }) => displayId);
 
   const { renderedPrompt, warnings } = renderPromptTemplate({
     template: input.aiPrompt,
@@ -56,14 +62,15 @@ const buildPrompt = (input: {
       articleTitle: input.title,
       articleTags: input.tags.join(', ') || 'No tags',
       articleParagraphs,
-      videoTitle: input.video.title,
-      videoTags: input.video.tags.join(', ') || 'No tags',
-      videoTranscript,
+      videos,
     },
     requiredPlaceholders: FULL_RECOMMENDATION_REQUIRED_PLACEHOLDERS,
   });
 
-  return { prompt: renderedPrompt, warnings };
+  return {
+    prompt: `${renderedPrompt}\n\n${getFullRecommendationResponseInstructions(videoIds)}`,
+    warnings,
+  };
 };
 
 export const generateFullModeRecommendation = async (
@@ -72,11 +79,11 @@ export const generateFullModeRecommendation = async (
   const paragraphs = extractArticleParagraphs(input.article.content);
 
   if (paragraphs.length < 2) {
-    const { introText, warnings } = await generateVideoIntroText(input);
+    const { videoIntros, warnings } = await generateVideoIntroTexts(input);
 
     return {
       recommendedInsertionIndex: null,
-      introText,
+      videoIntros,
       warnings,
     };
   }
@@ -85,17 +92,21 @@ export const generateFullModeRecommendation = async (
     title: input.article.title,
     tags: input.article.tags,
     paragraphs,
-    video: input.video,
+    videos: input.videos,
     language: input.options.language,
     aiPrompt: input.aiPrompt,
   });
   const aiGatewayResponse = await generateResult(prompt);
-  const { recommendedInsertionIndex, introText } =
-    parseFullRecommendationResponse(aiGatewayResponse, paragraphs.length);
+  const { recommendedInsertionIndex, videoIntros } =
+    parseFullRecommendationResponse(
+      aiGatewayResponse,
+      paragraphs.length,
+      input.videos.map(({ displayId }) => displayId),
+    );
 
   return {
     recommendedInsertionIndex,
-    introText,
+    videoIntros,
     warnings,
   };
 };

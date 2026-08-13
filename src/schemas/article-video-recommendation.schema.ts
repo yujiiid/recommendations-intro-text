@@ -15,17 +15,16 @@ const articleSchema = z.object({
 
 export const recommendationRequestSchema = z.object({
   mode: z
-    .enum(['full', 'position-only', 'video-with-intro', 'video-only'])
+    .enum(['full', 'position-only', 'videos-with-intro', 'videos-only'])
     .default('full'),
   article: articleSchema,
   options: z
     .object({
       language: z.string().min(1).default('no'),
+      videoLimit: z.number().int().positive().max(5).default(1),
     })
-    .default({ language: 'no' }),
+    .default({ language: 'no', videoLimit: 1 }),
   aiPrompt: promptSchema,
 });
 
-export type recommendationRequest = z.infer<
-  typeof recommendationRequestSchema
->;
+export type recommendationRequest = z.infer<typeof recommendationRequestSchema>;

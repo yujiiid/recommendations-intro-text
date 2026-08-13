@@ -55,19 +55,20 @@ const parseVideoRecommendations = (
   return response as VideoRecommendationsResponse;
 };
 
-const findBestMatch = (
+const sortMatchesByScore = (
   matches: VideoRecommendationMatch[],
-): VideoRecommendationMatch | undefined => {
-  return matches.reduce<VideoRecommendationMatch | undefined>(
-    (bestMatch, currentMatch) => {
-      if (!bestMatch || currentMatch.score > bestMatch.score) {
-        return currentMatch;
-      }
+): VideoRecommendationMatch[] => {
+  return [...matches].sort((firstMatch, secondMatch) => {
+    return secondMatch.score - firstMatch.score;
+  });
+};
 
-      return bestMatch;
-    },
-    undefined,
-  );
+const mapRecommendedVideo = (
+  match: VideoRecommendationMatch,
+): RecommendedVideo => {
+  const { mediaId, title, tags, duration, posterUrl } = match.media;
+
+  return { id: mediaId, title, tags, duration, posterUrl };
 };
 
 const getResponseErrorMessage = async (response: Response): Promise<string> => {
@@ -90,22 +91,19 @@ const getResponseErrorMessage = async (response: Response): Promise<string> => {
   return responseBody.slice(0, 500);
 };
 
-export const findRecommendedVideo = async (
+export const findRecommendedVideos = async (
   articleContent: string,
-): Promise<RecommendedVideo> => {
+  videoLimit: number,
+): Promise<[RecommendedVideo, ...RecommendedVideo[]]> => {
   const url = new URL(env.VIDEO_RECOMMENDATIONS_API_URL);
 
   url.searchParams.set('q', articleContent);
-  url.searchParams.set('limit', '1');
+  url.searchParams.set('limit', String(videoLimit));
 
   let response: Response;
 
   try {
-    response = await fetch(url, {
-      headers: {
-        accept: 'application/json',
-      },
-    });
+    response = await fetch(url, { headers: { accept: 'application/json' } });
   } catch {
     throw new ExternalApiError('Failed to request Video Recommendations API');
   }
@@ -120,13 +118,13 @@ export const findRecommendedVideo = async (
   }
 
   const recommendations = parseVideoRecommendations(await response.json());
-  const bestMatch = findBestMatch(recommendations.matches);
+  const videos = sortMatchesByScore(recommendations.matches)
+    .slice(0, videoLimit)
+    .map(mapRecommendedVideo);
 
-  if (!bestMatch) {
+  if (videos.length === 0) {
     throw new NotFoundError('No video recommendations found for article');
   }
 
-  const { mediaId, title, tags, duration, posterUrl } = bestMatch.media;
-
-  return { id: mediaId, title, tags, duration, posterUrl };
+  return videos as [RecommendedVideo, ...RecommendedVideo[]];
 };
