@@ -1,6 +1,13 @@
-project_id = "ai-video-rec-stage"
-region     = "europe-north1"
+# Example local overrides. Never add credentials, tokens, or secret values here.
 
-# Terraform creates the Cloud Run service skeleton with this placeholder.
-# Build and push the real image, then update Cloud Run with gcloud.
-image = "gcr.io/cloudrun/hello"
+# Required: replace this placeholder with the target Google Cloud project ID.
+project_id = "your-gcp-project-id"
+
+# Optional overrides (current defaults are shown below).
+# region                       = "europe-north1"
+# image                        = "gcr.io/cloudrun/hello"
+# runtime_service_account_id   = "article-video-rec-run"
+# cf_aig_token_secret_id       = "cf-aig-token"
+
+# cf_aig_token_secret_id is only a Secret Manager resource ID.
+# Never put the actual CF_AIG_TOKEN value in Terraform variable files.
