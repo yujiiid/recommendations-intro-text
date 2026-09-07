@@ -105,7 +105,7 @@ The optional `mode` property defaults to `full` and controls which fields are ge
 
 Each mode validates `aiPrompt` against the placeholders required for that operation and falls back to its own built-in prompt when the supplied template is incompatible, adding the corresponding entries to `warnings`.
 
-For modes that generate intro text, all requested video metadata is fetched in parallel. The request fails if exact metadata or a valid generated intro is missing for any video. AI results are matched to recommendations by video `id`, not by array position.
+For modes that generate intro text, all requested video metadata is fetched in parallel. Recommendations without exact metadata are skipped, so the response can contain fewer videos than `options.videoLimit`. If metadata is unavailable for every recommendation, the service returns `404` with the `NO_AVAILABLE_VIDEO_RECOMMENDATIONS` code. Other Video Metadata API failures still fail the request. AI results are matched to recommendations by video `id`, not by array position.
 
 ## AI Prompts
 

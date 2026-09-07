@@ -23,6 +23,14 @@ export class NotFoundError extends AppError {
   }
 }
 
+export class NoAvailableVideoRecommendationsError extends AppError {
+  constructor(
+    message = 'No recommended videos with available metadata were found',
+  ) {
+    super(message, 404, 'NO_AVAILABLE_VIDEO_RECOMMENDATIONS');
+  }
+}
+
 export class ExternalApiError extends AppError {
   constructor(message = 'External API request failed') {
     super(message, 502, 'EXTERNAL_API_ERROR');

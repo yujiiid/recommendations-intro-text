@@ -2,10 +2,18 @@ import { Router } from 'express';
 import { recommendationRequestSchema } from '../schemas/article-video-recommendation.schema';
 import { generateFullModeRecommendation } from '../services/full-mode-recommendation-generator.service';
 import { generateVideoIntroTexts } from '../services/intro-text-generator.service';
-import { findRecommendedVideos } from '../services/video-recommendations-api.service';
+import {
+  findRecommendedVideos,
+  type RecommendedVideo,
+} from '../services/video-recommendations-api.service';
 import { recommendVideoInsertionIndex } from '../services/video-position-generator.service';
 import { fetchVideoMetadata } from '../services/video-metadata-api.service';
-import { ValidationError } from '../utils/errors';
+import type { NormalizedVideo } from '../types/video-metadata-api';
+import {
+  NoAvailableVideoRecommendationsError,
+  NotFoundError,
+  ValidationError,
+} from '../utils/errors';
 
 export const articleVideoRecommendationRouter = Router();
 
@@ -18,8 +26,35 @@ const addIntroTextsToVideos = <Video>(
     introText: videoIntros[index].introText,
   }));
 
-const fetchAllVideoMetadata = (videos: { id: string }[]) => {
-  return Promise.all(videos.map(({ id }) => fetchVideoMetadata(id)));
+type VideoMetadataFetcher = (videoId: string) => Promise<NormalizedVideo>;
+
+export const fetchAvailableVideosWithMetadata = async (
+  videos: RecommendedVideo[],
+  fetchMetadata: VideoMetadataFetcher = fetchVideoMetadata,
+): Promise<{ availableVideos: RecommendedVideo[]; videosMetadata: NormalizedVideo[] }> => {
+  const results = await Promise.all(
+    videos.map(async (video) => {
+      try {
+        return { video, metadata: await fetchMetadata(video.id) };
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          return null;
+        }
+
+        throw error;
+      }
+    }),
+  );
+  const availableVideos = results.filter((result) => result !== null);
+
+  if (availableVideos.length === 0) {
+    throw new NoAvailableVideoRecommendationsError();
+  }
+
+  return {
+    availableVideos: availableVideos.map(({ video }) => video),
+    videosMetadata: availableVideos.map(({ metadata }) => metadata),
+  };
 };
 
 articleVideoRecommendationRouter.post(
@@ -64,41 +99,43 @@ articleVideoRecommendationRouter.post(
         }
 
         case 'videos-with-intro': {
-          const videos = await findRecommendedVideos(
+          const recommendedVideos = await findRecommendedVideos(
             article.content,
             options.videoLimit,
           );
-          const videoMetadata = await fetchAllVideoMetadata(videos);
+          const { availableVideos, videosMetadata } =
+            await fetchAvailableVideosWithMetadata(recommendedVideos);
           const { videoIntros, warnings } = await generateVideoIntroTexts({
             article,
-            videos: videoMetadata,
+            videos: videosMetadata,
             options,
             aiPrompt,
           });
 
           res.json({
-            videos: addIntroTextsToVideos(videos, videoIntros),
+            videos: addIntroTextsToVideos(availableVideos, videoIntros),
             warnings,
           });
           return;
         }
 
         case 'full': {
-          const videos = await findRecommendedVideos(
+          const recommendedVideos = await findRecommendedVideos(
             article.content,
             options.videoLimit,
           );
-          const videoMetadata = await fetchAllVideoMetadata(videos);
+          const { availableVideos, videosMetadata } =
+            await fetchAvailableVideosWithMetadata(recommendedVideos);
           const { recommendedInsertionIndex, videoIntros, warnings } =
             await generateFullModeRecommendation({
               article,
-              videos: videoMetadata,
+              videos: videosMetadata,
               options,
               aiPrompt,
             });
 
           res.json({
-            videos: addIntroTextsToVideos(videos, videoIntros),
+            videos: addIntroTextsToVideos(availableVideos, videoIntros),
             recommendedInsertionIndex,
             warnings,
           });
