@@ -18,12 +18,12 @@ export const recommendationRequestSchema = z.object({
     .enum(['full', 'position-only', 'videos-with-intro', 'videos-only'])
     .default('full'),
   article: articleSchema,
-  options: z
-    .object({
-      language: z.string().min(1).default('no'),
-      videoLimit: z.number().int().positive().max(5).default(1),
-    })
-    .default({ language: 'no', videoLimit: 1 }),
+  options: z.object({
+    language: z.string().trim().min(1).optional(),
+    videoLimit: z.number().int().positive().max(5).default(1),
+    country: z.string().trim().min(1, 'options.country is required'),
+    brand: z.string().trim().min(1, 'options.brand is required'),
+  }),
   aiPrompt: promptSchema,
 });
 

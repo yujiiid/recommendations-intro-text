@@ -1,4 +1,5 @@
 import { env } from '../config/env';
+import type { SupportedSite } from '../config/supported-sites';
 import type {
   NormalizedVideo,
   VideoMetadataApiResponse,
@@ -18,22 +19,22 @@ const normalizeVideo = (video: VideoMetadataApiVideo): NormalizedVideo => {
 
 export const fetchVideoMetadata = async (
   videoId: string,
+  { brand, country }: SupportedSite,
 ): Promise<NormalizedVideo> => {
   const url = new URL('/v3/videos/_search', env.VIDEO_METADATA_API_BASE_URL);
 
-  url.search = new URLSearchParams({
-    //brand: env.VIDEO_METADATA_DEFAULT_BRAND,
-    //country: env.VIDEO_METADATA_DEFAULT_COUNTRY,
-    // TODO: Remove when API is ready
-    brand: 'dagbladet',
-    country: 'no',
+  const searchParams = new URLSearchParams({
+    brand,
+    country,
     sortBy: 'publishDate',
     publishState: 'published',
     order: 'desc',
     limit: '30',
     page: '1',
     q: videoId,
-  }).toString();
+  });
+
+  url.search = searchParams.toString();
 
   let response: Response;
 

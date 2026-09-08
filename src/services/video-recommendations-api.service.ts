@@ -1,4 +1,5 @@
 import { env } from '../config/env';
+import type { SupportedSite } from '../config/supported-sites';
 import type {
   VideoRecommendationMatch,
   VideoRecommendationsResponse,
@@ -94,11 +95,14 @@ const getResponseErrorMessage = async (response: Response): Promise<string> => {
 export const findRecommendedVideos = async (
   articleContent: string,
   videoLimit: number,
+  { brand, country }: SupportedSite,
 ): Promise<[RecommendedVideo, ...RecommendedVideo[]]> => {
   const url = new URL(env.VIDEO_RECOMMENDATIONS_API_URL);
 
   url.searchParams.set('q', articleContent);
   url.searchParams.set('limit', String(videoLimit));
+  url.searchParams.set('market', country);
+  url.searchParams.set('brand', brand);
 
   let response: Response;
 

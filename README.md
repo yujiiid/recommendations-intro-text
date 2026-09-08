@@ -24,8 +24,6 @@ Fill in the values you need:
 - `AI_GATEWAY_BASE_URL` points the OpenAI client to Cloudflare AI Gateway.
 - `AI_GATEWAY_MODEL` controls which AI Gateway model is used.
 - `VIDEO_RECOMMENDATIONS_API_URL` controls where video recommendations are fetched from.
-- `VIDEO_METADATA_DEFAULT_BRAND` controls the video API brand query param.
-- `VIDEO_METADATA_DEFAULT_COUNTRY` controls the video API country query param.
 
 ## Run
 
@@ -60,8 +58,9 @@ curl -X POST http://localhost:3000/article-video-recommendation \
       "tags": ["fashion", "beauty"]
     },
     "options": {
-      "language": "no",
-      "videoLimit": 3
+      "videoLimit": 3,
+      "country": "no",
+      "brand": "dagbladet"
     },
     "aiPrompt": "Language: ${responseLanguage}\nArticle title: ${articleTitle}\nArticle tags: ${articleTags}\nParagraphs:\n${articleParagraphs}\nVideos:\n${videos}\nChoose one insertion position that works for every video and write a separate intro text for each video."
   }'
@@ -95,6 +94,17 @@ Response:
 ```
 
 The optional `options.videoLimit` property is an integer from `1` to `5` and defaults to `1`. It limits how many unique video recommendations are requested and returned.
+
+The `options.country` and `options.brand` properties are required. `country` supports `no`, `se`, `dk`, and `fi`, and the brand must be supported in the selected country. Unsupported values return `400` with either `COUNTRY_NOT_SUPPORTED` or `BRAND_NOT_SUPPORTED`.
+
+The optional `options.language` property overrides the language used for generated video intro texts. When it is omitted, the service uses the default language for the required `options.country`: Norwegian Bokmål, Swedish, Danish, or Finnish.
+
+Supported brand and country combinations:
+
+- `no`: `borsen`, `dagbladet`, `dinside`, `elbil24`, `kk`, `seher`, `sol`
+- `se`: `allas`, `elle`, `femina`, `hant`, `mabra`, `motherhood`, `recept`, `residence`, `svenskdam`
+- `dk`: `billedbladet`, `familiejournal`, `femina`, `isabellas`, `seoghoer`, `spisbedre`, `udeoghjemme`
+- `fi`: `femina`, `seiska`
 
 The optional `mode` property defaults to `full` and controls which fields are generated:
 

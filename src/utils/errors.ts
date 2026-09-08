@@ -17,6 +17,26 @@ export class ValidationError extends AppError {
   }
 }
 
+export class UnsupportedCountryError extends AppError {
+  constructor(country: string) {
+    super(
+      `Country "${country}" is not supported`,
+      400,
+      'COUNTRY_NOT_SUPPORTED',
+    );
+  }
+}
+
+export class UnsupportedBrandError extends AppError {
+  constructor(brand: string, country: string) {
+    super(
+      `Brand "${brand}" is not supported for country "${country}"`,
+      400,
+      'BRAND_NOT_SUPPORTED',
+    );
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(message = 'Resource not found') {
     super(message, 404, 'NOT_FOUND');

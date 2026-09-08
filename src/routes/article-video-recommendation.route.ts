@@ -1,4 +1,10 @@
 import { Router } from 'express';
+import {
+  DEFAULT_LANGUAGE_BY_COUNTRY,
+  isSupportedBrand,
+  isSupportedCountry,
+  type SupportedSite,
+} from '../config/supported-sites';
 import { recommendationRequestSchema } from '../schemas/article-video-recommendation.schema';
 import { generateFullModeRecommendation } from '../services/full-mode-recommendation-generator.service';
 import { generateVideoIntroTexts } from '../services/intro-text-generator.service';
@@ -12,6 +18,8 @@ import type { NormalizedVideo } from '../types/video-metadata-api';
 import {
   NoAvailableVideoRecommendationsError,
   NotFoundError,
+  UnsupportedBrandError,
+  UnsupportedCountryError,
   ValidationError,
 } from '../utils/errors';
 
@@ -26,16 +34,35 @@ const addIntroTextsToVideos = <Video>(
     introText: videoIntros[index].introText,
   }));
 
-type VideoMetadataFetcher = (videoId: string) => Promise<NormalizedVideo>;
+type VideoMetadataFetcher = (
+  videoId: string,
+  site: SupportedSite,
+) => Promise<NormalizedVideo>;
+
+const validateSite = (brand: string, country: string): SupportedSite => {
+  if (!isSupportedCountry(country)) {
+    throw new UnsupportedCountryError(country);
+  }
+
+  if (!isSupportedBrand(brand, country)) {
+    throw new UnsupportedBrandError(brand, country);
+  }
+
+  return { brand, country };
+};
 
 export const fetchAvailableVideosWithMetadata = async (
   videos: RecommendedVideo[],
+  site: SupportedSite,
   fetchMetadata: VideoMetadataFetcher = fetchVideoMetadata,
-): Promise<{ availableVideos: RecommendedVideo[]; videosMetadata: NormalizedVideo[] }> => {
+): Promise<{
+  availableVideos: RecommendedVideo[];
+  videosMetadata: NormalizedVideo[];
+}> => {
   const results = await Promise.all(
     videos.map(async (video) => {
       try {
-        return { video, metadata: await fetchMetadata(video.id) };
+        return { video, metadata: await fetchMetadata(video.id, site) };
       } catch (error) {
         if (error instanceof NotFoundError) {
           return null;
@@ -73,6 +100,11 @@ articleVideoRecommendationRouter.post(
 
     try {
       const { article, options, mode, aiPrompt } = parsedBody.data;
+      const site = validateSite(options.brand, options.country);
+      const optionsWithLanguage = {
+        ...options,
+        language: options.language ?? DEFAULT_LANGUAGE_BY_COUNTRY[site.country],
+      };
 
       switch (mode) {
         case 'position-only': {
@@ -92,6 +124,7 @@ articleVideoRecommendationRouter.post(
           const videos = await findRecommendedVideos(
             article.content,
             options.videoLimit,
+            site,
           );
 
           res.json({ videos, warnings: [] });
@@ -102,13 +135,14 @@ articleVideoRecommendationRouter.post(
           const recommendedVideos = await findRecommendedVideos(
             article.content,
             options.videoLimit,
+            site,
           );
           const { availableVideos, videosMetadata } =
-            await fetchAvailableVideosWithMetadata(recommendedVideos);
+            await fetchAvailableVideosWithMetadata(recommendedVideos, site);
           const { videoIntros, warnings } = await generateVideoIntroTexts({
             article,
             videos: videosMetadata,
-            options,
+            options: optionsWithLanguage,
             aiPrompt,
           });
 
@@ -123,14 +157,15 @@ articleVideoRecommendationRouter.post(
           const recommendedVideos = await findRecommendedVideos(
             article.content,
             options.videoLimit,
+            site,
           );
           const { availableVideos, videosMetadata } =
-            await fetchAvailableVideosWithMetadata(recommendedVideos);
+            await fetchAvailableVideosWithMetadata(recommendedVideos, site);
           const { recommendedInsertionIndex, videoIntros, warnings } =
             await generateFullModeRecommendation({
               article,
               videos: videosMetadata,
-              options,
+              options: optionsWithLanguage,
               aiPrompt,
             });
 

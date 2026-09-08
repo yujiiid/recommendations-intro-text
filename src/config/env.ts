@@ -14,8 +14,6 @@ const envSchema = z.object({
     .string()
     .url()
     .default('https://aller-recommendations.mediehub.stream/api/search'),
-  VIDEO_METADATA_DEFAULT_BRAND: z.string().min(1).default('dagbladet'),
-  VIDEO_METADATA_DEFAULT_COUNTRY: z.string().min(1).default('no'),
   REQUEST_BODY_LIMIT: z.string().min(1).default('2mb'),
   CF_AIG_TOKEN: z.string().min(1, 'CF_AIG_TOKEN is required'),
   AI_GATEWAY_BASE_URL: z
